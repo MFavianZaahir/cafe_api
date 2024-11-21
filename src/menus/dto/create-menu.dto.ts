@@ -1,22 +1,21 @@
-import { IsString, IsInt, IsBoolean, IsEnum } from 'class-validator';
-import { Jenis } from '@prisma/client';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateMenuDto {
+  @IsNotEmpty()
   @IsString()
   nama_menu: string;
 
-  @IsEnum(Jenis)
-  jenis: Jenis;
+  @IsNotEmpty()
+  @IsString()
+  jenis: string;
 
+  @IsNotEmpty()
   @IsString()
   deskripsi: string;
 
-  @IsString()
-  gambar: string;
+  @IsNotEmpty()
+  @IsString() // Keep it as string for form-data compatibility
+  harga: string;
 
-  @IsInt()
-  harga: number;
-
-  @IsBoolean()
-  isPerished?: boolean;
+  gambar?: string; // Optional since it's handled by multer
 }
