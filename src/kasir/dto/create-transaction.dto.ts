@@ -1,18 +1,31 @@
-import { IsString, IsArray, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsString, IsArray, ValidateNested, IsNumber } from 'class-validator';
+import { Type } from 'class-transformer';
+
+class TransactionDetailDto {
+  @IsNotEmpty()
+  @IsString()
+  nama_menu: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  qty: number;
+}
 
 export class CreateTransactionDto {
-  @IsUUID()
-  id_meja: string;
+  @IsNotEmpty()
+  @IsNumber()
+  nomor_meja: number;
 
-  @IsUUID()
-  id_user: string;
+  @IsNotEmpty()
+  @IsString()
+  username: string;
 
+  @IsNotEmpty()
   @IsString()
   nama_pelanggan: string;
 
   @IsArray()
-  items: {
-    id_menu: string;
-    qty: number;
-  }[];
+  @ValidateNested({ each: true })
+  @Type(() => TransactionDetailDto)
+  details: TransactionDetailDto[];
 }

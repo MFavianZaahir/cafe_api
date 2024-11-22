@@ -20,8 +20,12 @@ export class KasirController {
     return this.kasirService.findOne(id);
   }
 
-  @Post('transactions')
+  @Post()
   async create(@Body() createTransactionDto: CreateTransactionDto) {
+    if (!createTransactionDto.details || createTransactionDto.details.length === 0) {
+      throw new BadRequestException('Transaction must include at least one menu item.');
+    }
+
     return this.kasirService.create(createTransactionDto);
   }
 

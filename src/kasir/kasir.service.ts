@@ -94,22 +94,63 @@ export class KasirService {
   }
 
   // Update transaction status to "LUNAS" (Paid)
-  async markAsPaid(id: string) {
-    const transaksi = await this.prisma.transaksi.findUnique({ where: { id_transaksi: id } });
+  async create(data: CreateTransactionDto) {
+    const { nomor_meja, username, nama_pelanggan, details } = data;
 
-    if (!transaksi) throw new NotFoundException('Transaction not found');
-    if (transaksi.status === 'LUNAS') throw new BadRequestException('Transaction already paid');
+    // Validate and fetch the table (meja) ID
+    const meja = await this.prisma.meja.findUnique({
+      where: { nomor_meja },
+    });
+    if (!meja || !meja.isVacant) {
+      throw new BadRequestException('Table is either occupied or does not exist.');
+    }
+
+    // Prepare details with fetched menu prices
+    const preparedDetails = await Promise.all(
+      details.map(async (detail) => {
+        const menu = await this.prisma.menu.findUnique({
+          where: { nama_menu: detail.nama_menu },
+        });
+        if (!menu) {
+          throw new NotFoundException(`Menu item "${detail.nama_menu}" not found.`);
+        }
+
+        return {
+          id_menu: menu.id_menu,
+          harga: menu.harga,
+          qty: detail.qty,
+          totalHarga: BigInt(menu.harga * detail.qty),
+        };
+      }),
+    );
+
+    // Calculate total price for the transaction
+    const totalPrice = preparedDetails.reduce((sum, detail) => sum + detail.totalHarga, BigInt(0));
+
+    // Create transaction and mark table as occupied
+    const transaction = await this.prisma.transaksi.create({
+      data: {
+        id_meja: meja.id_meja,
+        username,
+        nama_pelanggan,
+        details: {
+          create: preparedDetails,
+        },
+        status: 'BELUM_BAYAR',
+      },
+      include: {
+        details: true,
+      },
+    });
 
     await this.prisma.meja.update({
-      where: { id_meja: transaksi.id_meja },
-      data: { isVacant: true },
+      where: { id_meja: meja.id_meja },
+      data: { isVacant: false },
     });
 
-    return this.prisma.transaksi.update({
-      where: { id_transaksi: id },
-      data: { status: 'LUNAS' },
-    });
+    return { ...transaction, totalPrice };
   }
+}
 
   // Print receipt
   async printReceipt(id: string) {
