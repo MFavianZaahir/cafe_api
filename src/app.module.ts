@@ -8,9 +8,10 @@ import { ConfigModule } from '@nestjs/config';
 import { MejaController } from './meja/meja.controller';
 import { MejaService } from './meja/meja.service';
 import { MejaModule } from './meja/meja.module';
+import { KasirModule } from './kasir/kasir.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }),PrismaModule, UsersModule, MenusModule, TablesModule, AuthModule, MejaModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }),PrismaModule, UsersModule, MenusModule, TablesModule, AuthModule, MejaModule, KasirModule],
   controllers: [MejaController],
   providers: [MejaService],
 })
