@@ -79,4 +79,22 @@ export class MenusService {
       },
     });
   }
+
+  async delete(id: string) {
+    const menu = await this.prisma.menu.findUnique({
+      where: { id_menu: id },
+    });
+    if (!menu) {
+      throw new NotFoundException('Menu item not found');
+    }
+
+    // Implement logic to handle deletion (e.g., setting a flag or actually deleting from the database)
+    // This example sets the 'isPerished' flag to true
+    return this.prisma.menu.update({
+      where: { id_menu: id },
+      data: {
+        isPerished: true,
+      },
+    });
+  }
 }

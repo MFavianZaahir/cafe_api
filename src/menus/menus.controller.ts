@@ -83,9 +83,9 @@ import {
     }
   
     // Uncomment the delete method if needed
-    // @Delete(':id')
-    // async delete(@Param('id') id: string) {
-    //     return this.menusService.delete(id);
-    // }
+    @Delete(':id')
+    async delete(@Param('id') id: string) {
+        return this.menusService.delete(id);
+    }
   }
   

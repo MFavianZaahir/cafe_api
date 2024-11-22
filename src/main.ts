@@ -1,14 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { join } from 'path';
-import { StaticModule } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Serve static files from the 'uploads' directory
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads', // URL path to access uploaded files
+    prefix: '/uploads', // Access files via '/uploads/{filename}'
   });
 
   await app.listen(3000);
