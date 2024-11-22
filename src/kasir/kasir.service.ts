@@ -41,71 +41,32 @@ export class KasirService {
   
     return transaksi;
   }
-  
 
   // Create a new transaction
-  async create(createTransactionDto: CreateTransactionDto) {
-    const { id_meja, id_user, nama_pelanggan, items } = createTransactionDto;
-
-    // Check if the table is vacant
-    const meja = await this.prisma.meja.findUnique({ where: { id_meja } });
-    if (!meja || !meja.isVacant) {
-      throw new BadRequestException('Table is not available');
-    }
-
-    // Calculate totals
-    let total = 0;
-    const detailTransaksi = await Promise.all(
-      items.map(async (item) => {
-        const menu = await this.prisma.menu.findUnique({ where: { id_menu: item.id_menu } });
-        if (!menu) throw new NotFoundException(`Menu item not found: ${item.id_menu}`);
-
-        const subTotal = menu.harga * item.qty;
-        total += subTotal;
-
-        return {
-          id_menu: item.id_menu,
-          harga: menu.harga,
-          qty: item.qty,
-          totalHarga: subTotal,
-        };
-      }),
-    );
-
-    // Create transaction and mark table as occupied
-    const transaksi = await this.prisma.transaksi.create({
-      data: {
-        id_user,
-        id_meja,
-        nama_pelanggan,
-        status: 'BELUM_BAYAR',
-        details: {
-          create: detailTransaksi,
-        },
-      },
-    });
-
-    await this.prisma.meja.update({
-      where: { id_meja },
-      data: { isVacant: false },
-    });
-
-    return transaksi;
-  }
-
-  // Update transaction status to "LUNAS" (Paid)
   async create(data: CreateTransactionDto) {
     const { nomor_meja, username, nama_pelanggan, details } = data;
-
-    // Validate and fetch the table (meja) ID
+  
+    // Validate table
     const meja = await this.prisma.meja.findUnique({
       where: { nomor_meja },
     });
-    if (!meja || !meja.isVacant) {
-      throw new BadRequestException('Table is either occupied or does not exist.');
+    if (!meja) {
+      throw new NotFoundException(`Table with number ${nomor_meja} not found.`);
     }
-
-    // Prepare details with fetched menu prices
+    if (!meja.isVacant) {
+      throw new BadRequestException(`Table ${nomor_meja} is not vacant.`);
+    }
+  
+    // Fetch the userId dynamically based on the provided username (or other identification method)
+    const user = await this.prisma.user.findUnique({
+      where: { username }, // Assuming 'username' is passed in the request
+    });
+  
+    if (!user) {
+      throw new NotFoundException(`User with username "${username}" not found.`);
+    }
+  
+    // Prepare transaction details
     const preparedDetails = await Promise.all(
       details.map(async (detail) => {
         const menu = await this.prisma.menu.findUnique({
@@ -114,7 +75,6 @@ export class KasirService {
         if (!menu) {
           throw new NotFoundException(`Menu item "${detail.nama_menu}" not found.`);
         }
-
         return {
           id_menu: menu.id_menu,
           harga: menu.harga,
@@ -123,58 +83,77 @@ export class KasirService {
         };
       }),
     );
-
-    // Calculate total price for the transaction
-    const totalPrice = preparedDetails.reduce((sum, detail) => sum + detail.totalHarga, BigInt(0));
-
-    // Create transaction and mark table as occupied
+  
+    // Create transaction with valid userId
     const transaction = await this.prisma.transaksi.create({
       data: {
-        id_meja: meja.id_meja,
-        username,
         nama_pelanggan,
-        details: {
-          create: preparedDetails,
-        },
-        status: 'BELUM_BAYAR',
+        user: { connect: { id_user: user.id_user } }, // Using user ID from the database
+        meja: { connect: { id_meja: meja.id_meja } }, // Use the retrieved meja object
+        details: { create: preparedDetails },
       },
-      include: {
-        details: true,
-      },
+      include: { details: true },
     });
-
+  
+    // Update table status
     await this.prisma.meja.update({
       where: { id_meja: meja.id_meja },
       data: { isVacant: false },
     });
-
-    return { ...transaction, totalPrice };
+  
+    return transaction;
   }
-}
+  
+  // Update transaction status to "LUNAS" (Paid)
+  async markAsPaid(id: string) {
+    const transaksi = await this.prisma.transaksi.findUnique({ where: { id_transaksi: id } });
 
-  // Print receipt
+    if (!transaksi) throw new NotFoundException('Transaction not found');
+    if (transaksi.status === 'LUNAS') throw new BadRequestException('Transaction already paid');
+
+    await this.prisma.meja.update({
+      where: { id_meja: transaksi.id_meja },
+      data: { isVacant: true },
+    });
+
+    return this.prisma.transaksi.update({
+      where: { id_transaksi: id },
+      data: { status: 'LUNAS' },
+    });
+  }
+
   async printReceipt(id: string) {
-    const transaksi = await this.findOne(id);
+    const transaction = await this.prisma.transaksi.findUnique({
+      where: { id_transaksi: id },
+      include: {
+        details: {
+          include: {
+            menu: true,
+          },
+        },
+        meja: true,
+      },
+    });
   
-    const receipt = {
-      cafeName: 'Wikusama Cafe',
-      transactionDate: transaksi.tgl_transaksi,
-      cashierName: transaksi.user.name,
-      tableNumber: transaksi.meja.nomor_meja,
-      customerName: transaksi.nama_pelanggan,
-      items: transaksi.details.map((detail) => ({
-        menuName: detail.menu.nama_menu,
-        qty: detail.qty,
-        price: detail.harga,
-        total: Number(detail.totalHarga), // Convert BigInt to number
-      })),
-      totalPrice: transaksi.details.reduce(
-        (sum, detail) => sum + Number(detail.totalHarga), // Convert BigInt to number
-        0,
-      ),
+    if (!transaction) {
+      throw new NotFoundException(`Transaction with ID "${id}" not found.`);
+    }
+  
+    // Map details to convert BigInt totalHarga to string
+    const orderDetails = transaction.details.map((detail) => ({
+      menu: detail.menu.nama_menu,
+      price: detail.harga,
+      quantity: detail.qty,
+      total: detail.totalHarga.toString(),  // Convert BigInt to string
+    }));
+  
+    return {
+      cafeName: "Wikusama Cafe",
+      transactionDate: transaction.tgl_transaksi,
+      cashierName: transaction.nama_pelanggan, // Adjust field as necessary
+      orderDetails,  // Send the mapped details with total as string
+      tableNumber: transaction.meja.nomor_meja,
     };
-  
-    return receipt;
   }
   
 }

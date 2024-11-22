@@ -2,13 +2,17 @@ import { IsNotEmpty, IsString, IsArray, ValidateNested, IsNumber } from 'class-v
 import { Type } from 'class-transformer';
 
 class TransactionDetailDto {
-  @IsNotEmpty()
-  @IsString()
-  nama_menu: string;
+    @IsNotEmpty()
+    @IsString()
+    nama_menu: string;
 
-  @IsNotEmpty()
-  @IsNumber()
-  qty: number;
+    @IsNotEmpty()
+    @IsNumber()
+    qty: number;
+
+    @IsNotEmpty()
+    @IsNumber()
+    harga: number;
 }
 
 export class CreateTransactionDto {

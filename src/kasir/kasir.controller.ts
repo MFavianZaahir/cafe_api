@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, BadRequestException } from '@nestjs/common';
 import { KasirService } from './kasir.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 
