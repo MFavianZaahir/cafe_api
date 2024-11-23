@@ -39,7 +39,7 @@ export class MejaService {
     });
   }
 
-  async update(id: string, updateMejaDto: UpdateMejaDto) {
+  async empty(id: string, updateMejaDto: UpdateMejaDto) {
     const meja = await this.prisma.meja.findUnique({
       where: { id_meja: id },
     });
@@ -52,6 +52,26 @@ export class MejaService {
       where: { id_meja: id },
       data: updateMejaDto,
     });
+  }
+
+  async vacant(id: string) {
+    const meja = await this.prisma.meja.findUnique({
+      where: { id_meja: id },
+    });
+
+    if (!meja) {
+      throw new NotFoundException('Table not found');
+    }
+
+    return this.prisma.meja.update({
+      where: {
+        id_meja: "5fc181ba-a7ee-423e-ae40-d92cec62a90c",
+      },
+      data: {
+        isVacant: true, // Set it back to true
+      },
+    });
+    
   }
 
   async delete(id: string) {

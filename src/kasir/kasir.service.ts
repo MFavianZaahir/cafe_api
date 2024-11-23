@@ -8,19 +8,27 @@ export class KasirService {
   constructor(private readonly prisma: PrismaService) {}
 
   // View all transactions
-  async findAll(filters: { status?: string; date?: Date }) {
-    const { status, date } = filters;
-
+  async findAll(filters: { status?: string; startDate?: Date; endDate?: Date }) {
+    const { status, startDate, endDate } = filters;
+  
+    // Construct the where clause dynamically based on the provided filters
     const whereClause: any = {
       status,
-      tgl_transaksi: date ? { gte: date } : undefined,
+      tgl_transaksi: startDate || endDate
+        ? {
+            gte: startDate || undefined, // Greater than or equal to startDate
+            lte: endDate || undefined,  // Less than or equal to endDate
+          }
+        : undefined,
     };
-
+  
+    // Fetch transactions based on filters
     return this.prisma.transaksi.findMany({
       where: whereClause,
       include: { details: true, meja: true, user: true },
     });
   }
+  
 
   // Get specific transaction
   async findOne(id: string) {

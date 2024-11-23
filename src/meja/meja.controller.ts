@@ -11,8 +11,13 @@ import {
   import { MejaService } from './meja.service';
   import { CreateMejaDto } from './dto/create-meja.dto';
   import { UpdateMejaDto } from './dto/update-meja.dto';
+  import { UseGuards } from '@nestjs/common';
+  import { Roles } from '../auth/roles.decorator';
+  import { RolesGuard } from '../auth/roles.guard';
   
   @Controller('meja')
+  @UseGuards(RolesGuard) // Apply the guard to the entire controller
+  @Roles('ADMIN')
   export class MejaController {
     constructor(private readonly mejaService: MejaService) {}
   
@@ -31,12 +36,19 @@ import {
       return this.mejaService.create(createMejaDto);
     }
   
-    @Put(':id')
-    async update(
+    @Put(':id/empty')
+    async empty(
       @Param('id') id: string,
       @Body() updateMejaDto: UpdateMejaDto,
     ) {
-      return this.mejaService.update(id, updateMejaDto);
+      return this.mejaService.empty(id, updateMejaDto);
+    }
+
+    @Put(':id/vacant')
+    async vacant(
+      @Param('id') id: string,
+    ) {
+      return this.mejaService.vacant(id);
     }
   
     @Delete(':id')
