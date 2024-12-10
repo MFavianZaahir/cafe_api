@@ -6,6 +6,7 @@ CREATE TABLE `User` (
     `password` VARCHAR(191) NOT NULL,
     `role` ENUM('ADMIN', 'KASIR', 'MANAJER') NOT NULL DEFAULT 'ADMIN',
     `unalived` BOOLEAN NOT NULL DEFAULT false,
+    `image` VARCHAR(191) NULL,
 
     UNIQUE INDEX `User_username_key`(`username`),
     PRIMARY KEY (`id_user`)

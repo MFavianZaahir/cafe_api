@@ -8,16 +8,19 @@ datasource db {
 }
 
 model user {
-  id_user      String      @id @default(uuid())
-  name    String    
-  username String @unique
-  password String
-  role  Role @default(ADMIN)
-  unalived Boolean @default(false)
+  id_user   String  @id @default(uuid())
+  name      String
+  username  String  @unique
+  password  String
+  role      Role    @default(ADMIN)
+  unalived  Boolean @default(false)
+  image     String?
 
   transaksi transaksi[]
+
   @@map("User")
 }
+
 
 model meja {
   id_meja      String     @id @default(uuid())

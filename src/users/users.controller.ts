@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, UploadedFile, UseInterceptors, Patch } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UseGuards } from '@nestjs/common';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Prisma } from '@prisma/client';
 
 @Controller('users')
@@ -14,8 +14,12 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  async create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.createUser(createUserDto);
+  @UseInterceptors(FileInterceptor('image'))
+  async create(
+    @Body() createUserDto: CreateUserDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.usersService.createUser(createUserDto, file);
   }
 
   @Get()
@@ -28,12 +32,14 @@ export class UsersController {
     return this.usersService.getUserById(id_user);
   }
 
-  @Put(':id')
+  @Patch(':id')
+  @UseInterceptors(FileInterceptor('image'))  
   async update(
     @Param('id') id_user: string,
     @Body() updateUserDto: UpdateUserDto,
+    @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.usersService.updateUser(id_user, updateUserDto);
+    return this.usersService.updateUser(id_user, updateUserDto, file);
   }
 
   @Delete(':id')

@@ -1,3 +1,4 @@
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
@@ -12,7 +13,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/roles.guard';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }),PrismaModule, UsersModule, MenusModule, AuthModule, MejaModule, KasirModule],
+  imports: [
+    CloudinaryModule, ConfigModule.forRoot({ isGlobal: true }), PrismaModule, UsersModule, MenusModule, AuthModule, MejaModule, KasirModule],
   providers: [
     {
       provide: APP_GUARD,
@@ -20,4 +22,4 @@ import { RolesGuard } from './auth/roles.guard';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
