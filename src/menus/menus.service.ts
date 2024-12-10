@@ -1,11 +1,18 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateMenuDto} from './dto/create-menu.dto';
+import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
+import { v2 as cloudinary } from 'cloudinary';
+import { UploadApiResponse } from 'cloudinary';
+import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class MenusService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinary: CloudinaryService,
+  ) { }
 
   async findAll() {
     return this.prisma.menu.findMany({
@@ -13,7 +20,7 @@ export class MenusService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, file?: Express.Multer.File) {
     const menu = await this.prisma.menu.findUnique({
       where: { id_menu: id },
     });
@@ -23,62 +30,71 @@ export class MenusService {
     return menu;
   }
 
-  async create(createMenuDto: CreateMenuDto, gambar: string) {
+  async create(createMenuDto: CreateMenuDto, file: Express.Multer.File) {
     const { nama_menu, jenis, deskripsi, harga } = createMenuDto;
-  
-    // Ensure 'jenis' is a valid enum value
-    const validJenis: ['MAKANAN', 'MINUMAN'] = ['MAKANAN', 'MINUMAN'];
-    if (!validJenis.includes(jenis as 'MAKANAN' | 'MINUMAN')) {
-      throw new BadRequestException('Invalid jenis value.');
-    }
-  
-    // Convert harga to a number
     const parsedHarga = parseInt(harga, 10);
+
     if (isNaN(parsedHarga)) {
-      throw new BadRequestException('Invalid value for harga. It must be a number.');
+        throw new BadRequestException('Invalid value for harga. It must be a number.');
     }
-  
+
+    let imageUrl: string | null = null;
+    if (file) {
+        imageUrl = await this.cloudinary.uploadImage(file);
+    }
+
     return this.prisma.menu.create({
-      data: {
-        nama_menu,
-        jenis: jenis as 'MAKANAN' | 'MINUMAN', // Use the enum value directly
-        deskripsi,
-        harga: parsedHarga, // Use the parsed integer here
-        gambar, // File name from multer
-      },
+        data: {
+            nama_menu,
+            jenis: jenis as 'MAKANAN' | 'MINUMAN',
+            deskripsi,
+            harga: parsedHarga,
+            gambar: imageUrl,
+        },
     });
-  }
-  
-  async update(id: string, updateMenuDto: UpdateMenuDto, filename?: string) {
+}
+
+
+  async update(id: string, updateMenuDto: UpdateMenuDto, filePath?: any) {
     const menu = await this.prisma.menu.findUnique({
       where: { id_menu: id },
     });
     if (!menu) {
       throw new NotFoundException('Menu item not found');
     }
-  
-    // Ensure jenis is valid enum
+
     const validJenis: ['MAKANAN', 'MINUMAN'] = ['MAKANAN', 'MINUMAN'];
     const updatedJenis = updateMenuDto.jenis
       ? (updateMenuDto.jenis as 'MAKANAN' | 'MINUMAN')
       : menu.jenis;
-  
-    // Convert harga to a number before update
+
     const parsedHarga = parseInt(updateMenuDto.harga, 10);
     if (isNaN(parsedHarga)) {
       throw new BadRequestException('Invalid value for harga. It must be a number.');
     }
-  
+
+    let imageUrl = menu.gambar;
+    if (filePath) {
+      try {
+        const uploadResult: any = await this.cloudinary.uploadImage(filePath);
+        imageUrl = uploadResult.secure_url;
+      } catch (error) {
+        throw new BadRequestException('Failed to upload image to Cloudinary.');
+      }
+    }
+
     return this.prisma.menu.update({
       where: { id_menu: id },
       data: {
         ...updateMenuDto,
         jenis: validJenis.includes(updatedJenis) ? updatedJenis : menu.jenis,
-        gambar: filename || menu.gambar,
-        harga: parsedHarga, // Use the parsed integer here
+        gambar: imageUrl,
+        harga: parsedHarga,
       },
     });
   }
+
+
 
   async delete(id: string) {
     const menu = await this.prisma.menu.findUnique({
@@ -97,4 +113,17 @@ export class MenusService {
       },
     });
   }
+
+  async uploadImage(file: Express.Multer.File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+            { folder: 'menu_images', resource_type: 'auto' },
+            (error, result) => {
+                if (error) return reject(error);
+                resolve(result.secure_url); // Secure URL of the uploaded image
+            },
+        ).end(file.buffer); // Use the buffer from Multer
+    });
+}
+
 }

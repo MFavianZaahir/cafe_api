@@ -5,6 +5,7 @@ https://docs.nestjs.com/providers#services
 import { Injectable } from '@nestjs/common';
 import { v2 as cloudinary } from 'cloudinary';
 import { ConfigService } from '@nestjs/config';
+import {UploadApiResponse} from 'cloudinary';
 import { resolve } from 'path';
 
 @Injectable()
