@@ -1,3 +1,4 @@
+import { MidtransModule } from './midtrans/midtrans.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
@@ -14,7 +15,7 @@ import { RolesGuard } from './auth/roles.guard';
 
 @Module({
   imports: [
-    CloudinaryModule, ConfigModule.forRoot({ isGlobal: true }), PrismaModule, UsersModule, MenusModule, AuthModule, MejaModule, KasirModule],
+    MidtransModule, CloudinaryModule, ConfigModule.forRoot({ isGlobal: true }), PrismaModule, UsersModule, MenusModule, AuthModule, MejaModule, KasirModule],
   providers: [
     {
       provide: APP_GUARD,

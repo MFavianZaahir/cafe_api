@@ -2,33 +2,37 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { MidtransService } from 'src/midtrans/midtrans.service';
 
 @Injectable()
 export class KasirService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly midtransService: MidtransService
+  ) { }
 
   // View all transactions
   async findAll(filters: { status?: string; startDate?: Date; endDate?: Date }) {
     const { status, startDate, endDate } = filters;
-  
+
     // Construct the where clause dynamically based on the provided filters
     const whereClause: any = {
       status,
       tgl_transaksi: startDate || endDate
         ? {
-            gte: startDate || undefined, // Greater than or equal to startDate
-            lte: endDate || undefined,  // Less than or equal to endDate
-          }
+          gte: startDate || undefined, // Greater than or equal to startDate
+          lte: endDate || undefined,  // Less than or equal to endDate
+        }
         : undefined,
     };
-  
+
     // Fetch transactions based on filters
     return this.prisma.transaksi.findMany({
       where: whereClause,
       include: { details: true, meja: true, user: true },
     });
   }
-  
+
 
   // Get specific transaction
   async findOne(id: string) {
@@ -42,18 +46,18 @@ export class KasirService {
         user: true,
       },
     });
-  
+
     if (!transaksi) {
       throw new NotFoundException('Transaction not found');
     }
-  
+
     return transaksi;
   }
 
   // Create a new transaction
   async create(data: CreateTransactionDto) {
     const { nomor_meja, username, nama_pelanggan, details } = data;
-  
+
     // Validate table
     const meja = await this.prisma.meja.findUnique({
       where: { nomor_meja },
@@ -64,16 +68,16 @@ export class KasirService {
     if (!meja.isVacant) {
       throw new BadRequestException(`Table ${nomor_meja} is not vacant.`);
     }
-  
+
     // Fetch the userId dynamically based on the provided username (or other identification method)
     const user = await this.prisma.user.findUnique({
       where: { username }, // Assuming 'username' is passed in the request
     });
-  
+
     if (!user) {
       throw new NotFoundException(`User with username "${username}" not found.`);
     }
-  
+
     // Prepare transaction details
     const preparedDetails = await Promise.all(
       details.map(async (detail) => {
@@ -91,7 +95,7 @@ export class KasirService {
         };
       }),
     );
-  
+
     // Create transaction with valid userId
     const transaction = await this.prisma.transaksi.create({
       data: {
@@ -102,33 +106,68 @@ export class KasirService {
       },
       include: { details: true },
     });
-  
+
     // Update table status
     await this.prisma.meja.update({
       where: { id_meja: meja.id_meja },
       data: { isVacant: false },
     });
-  
+
     return transaction;
   }
-  
+
   // Update transaction status to "LUNAS" (Paid)
+  // kasir.service.ts
   async markAsPaid(id: string) {
-    const transaksi = await this.prisma.transaksi.findUnique({ where: { id_transaksi: id } });
+    // Step 1: Fetch transaction details
+    const transaksi = await this.prisma.transaksi.findUnique({
+      where: { id_transaksi: id },
+      include: {
+        user: true,
+        details: {
+          include: {
+            menu: true
+          }
+        }
+      },
+    });
 
     if (!transaksi) throw new NotFoundException('Transaction not found');
     if (transaksi.status === 'LUNAS') throw new BadRequestException('Transaction already paid');
 
-    await this.prisma.meja.update({
-      where: { id_meja: transaksi.id_meja },
-      data: { isVacant: true },
-    });
+    // Step 2: Prepare Midtrans transaction payload
+    const grossAmount = transaksi.details.reduce(
+      (total, detail) => total + Number(detail.harga) * detail.qty,
+      0
+    );
 
-    return this.prisma.transaksi.update({
-      where: { id_transaksi: id },
-      data: { status: 'LUNAS' },
-    });
+    const transactionDetails = {
+      transaction_details: {
+        order_id: transaksi.id_transaksi,
+        gross_amount: grossAmount,
+      },
+      customer_details: {
+        first_name: transaksi.nama_pelanggan,
+        // email: transaksi.user.email
+      },
+      item_details: transaksi.details.map((detail) => ({
+        id: detail.id_menu,
+        price: Number(detail.harga),
+        quantity: detail.qty,
+        name: detail.menu.nama_menu,
+      })),
+    };
+
+    // Step 3: Create Midtrans transaction
+    const midtransTransaction = await this.midtransService.createTransaction(transactionDetails);
+
+    // Return payment URL to client
+    return {
+      message: 'Transaction created successfully. Proceed to payment.',
+      paymentUrl: midtransTransaction.redirect_url,
+    };
   }
+
 
   async printReceipt(id: string) {
     const transaction = await this.prisma.transaksi.findUnique({
@@ -142,11 +181,11 @@ export class KasirService {
         meja: true,
       },
     });
-  
+
     if (!transaction) {
       throw new NotFoundException(`Transaction with ID "${id}" not found.`);
     }
-  
+
     // Map details to convert BigInt totalHarga to string
     const orderDetails = transaction.details.map((detail) => ({
       menu: detail.menu.nama_menu,
@@ -154,7 +193,7 @@ export class KasirService {
       quantity: detail.qty,
       total: detail.totalHarga.toString(),  // Convert BigInt to string
     }));
-  
+
     return {
       cafeName: "Wikusama Cafe",
       transactionDate: transaction.tgl_transaksi,
@@ -163,5 +202,5 @@ export class KasirService {
       tableNumber: transaction.meja.nomor_meja,
     };
   }
-  
+
 }

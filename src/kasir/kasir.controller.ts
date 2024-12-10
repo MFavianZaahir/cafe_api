@@ -1,13 +1,17 @@
-import { Controller, Get, Post, Put, Body, Param, Query, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Req, Param, Query, BadRequestException } from '@nestjs/common';
 import { KasirService } from './kasir.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UseGuards } from '@nestjs/common';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { MidtransService } from 'src/midtrans/midtrans.service';
 
 @Controller('kasir')
 export class KasirController {
-  constructor(private readonly kasirService: KasirService) {}
+  constructor(
+    private readonly kasirService: KasirService,
+    private readonly midtransService: MidtransService
+  ) {}
 
   @Get('transactions')
   async getTransactions(
