@@ -12,10 +12,11 @@ import { MejaModule } from './meja/meja.module';
 import { KasirModule } from './kasir/kasir.module';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './auth/roles.guard';
+import { OutletModule } from './outlet/outlet.module';
 
 @Module({
   imports: [
-    MidtransModule, CloudinaryModule, ConfigModule.forRoot({ isGlobal: true }), PrismaModule, UsersModule, MenusModule, AuthModule, MejaModule, KasirModule],
+    MidtransModule, CloudinaryModule, ConfigModule.forRoot({ isGlobal: true }), PrismaModule, UsersModule, MenusModule, AuthModule, MejaModule, KasirModule, OutletModule],
   providers: [
     {
       provide: APP_GUARD,

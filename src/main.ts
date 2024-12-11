@@ -13,6 +13,6 @@ async function bootstrap() {
     prefix: '/uploads', // Access files via '/uploads/{filename}'
   });
 
-  await app.listen(3000);
+  await app.listen(3001);
 }
 bootstrap();

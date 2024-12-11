@@ -32,4 +32,6 @@ export class CreateTransactionDto {
   @ValidateNested({ each: true })
   @Type(() => TransactionDetailDto)
   details: TransactionDetailDto[];
+
+  id_outlet: string; // Add this field
 }

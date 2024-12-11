@@ -8,71 +8,88 @@ datasource db {
 }
 
 model user {
-  id_user   String  @id @default(uuid())
-  name      String
-  username  String  @unique
-  password  String
-  role      Role    @default(ADMIN)
-  unalived  Boolean @default(false)
-  image     String?
+  id_user  String  @id @default(uuid())
+  name     String
+  username String  @unique
+  password String
+  role     Role    @default(ADMIN)
+  unalived Boolean @default(false)
+  image    String?
 
   transaksi transaksi[]
 
   @@map("User")
 }
 
-
 model meja {
-  id_meja      String     @id @default(uuid())
-  nomor_meja    Int @unique
-  isVacant Boolean @default(true)
+  id_meja    String  @id @default(uuid())
+  nomor_meja Int     @unique
+  isVacant   Boolean @default(true)
   destructed Boolean @default(false)
 
   transaksi transaksi[]
+
   @@map("Meja")
 }
 
 model menu {
-  id_menu String @id @default(uuid())
-  nama_menu String @unique
-  jenis Jenis
-  deskripsi String
-  gambar String
-  harga Int
+  id_menu    String  @id @default(uuid())
+  nama_menu  String  @unique
+  jenis      Jenis
+  deskripsi  String
+  gambar     String
+  harga      Int
   isPerished Boolean @default(false)
 
   detail_transaksi detail_transaksi[]
+
   @@map("Menu")
 }
 
-model transaksi {
-  id_transaksi      String      @id @default(uuid())
-  tgl_transaksi   DateTime @default(now())
-  id_user String
-  id_meja String
-  nama_pelanggan String 
-  status Status @default(BELUM_BAYAR)
+model outlet {
+  id_outlet String @id @default(uuid())
+  name      String
+  address   String
+  longitude Float
+  latitude  Float
 
-  details detail_transaksi[]
-  user user  @relation(fields: [id_user], references: [id_user])
-  meja meja @relation(fields: [id_meja],references: [id_meja])
+  transaksi transaksi[] // Assuming transactions can be associated with an outlet.
+
+  @@map("Outlet")
+}
+
+model transaksi {
+  id_transaksi   String   @id @default(uuid())
+  tgl_transaksi  DateTime @default(now())
+  id_user        String
+  id_meja        String
+  nama_pelanggan String
+  status         Status   @default(BELUM_BAYAR)
+  id_outlet      String // Foreign key to outlet
+
+  details detail_transaksi[] // Relation with detail_transaksi
+  user    user               @relation(fields: [id_user], references: [id_user])
+  meja    meja               @relation(fields: [id_meja], references: [id_meja])
+  outlet  outlet             @relation(fields: [id_outlet], references: [id_outlet])
+
   @@map("Transaksi")
 }
 
-model detail_transaksi{
+model detail_transaksi {
   id_detail_transaksi String @id @default(uuid())
-  id_transaksi String
-  id_menu String
-  harga Int
-  qty Int
-  totalHarga BigInt
+  id_transaksi        String
+  id_menu             String
+  harga               Int
+  qty                 Int
+  totalHarga          BigInt
 
-  transaksi transaksi @relation(fields: [id_transaksi],references: [id_transaksi])
-  menu menu @relation(fields: [id_menu],references: [id_menu])
+  transaksi transaksi @relation(fields: [id_transaksi], references: [id_transaksi])
+  menu      menu      @relation(fields: [id_menu], references: [id_menu])
+
   @@map("Detail Transaksi")
 }
 
-enum Role{
+enum Role {
   ADMIN
   KASIR
   MANAJER
@@ -85,7 +102,7 @@ enum Status {
   EXPIRED
 }
 
-enum Jenis{
+enum Jenis {
   MAKANAN
   MINUMAN
 }

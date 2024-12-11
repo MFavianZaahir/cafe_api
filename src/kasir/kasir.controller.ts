@@ -37,8 +37,8 @@ export class KasirController {
   }
 
   @Post()
-  // @UseGuards(RolesGuard) // Apply the guard to the entire controller
-  // @Roles('KASIR')
+  @UseGuards(RolesGuard) // Apply the guard to the entire controller
+  @Roles('KASIR')
   async create(@Body() createTransactionDto: CreateTransactionDto) {
     if (!createTransactionDto.details || createTransactionDto.details.length === 0) {
       throw new BadRequestException('Transaction must include at least one menu item.');
@@ -48,8 +48,8 @@ export class KasirController {
   }
 
   @Put('transactions/:id/pay')
-  // @UseGuards(RolesGuard) // Apply the guard to the entire controller
-  // @Roles('KASIR')
+  @UseGuards(RolesGuard) // Apply the guard to the entire controller
+  @Roles('KASIR')
   async markAsPaid(@Param('id') id: string) {
     return this.kasirService.markAsPaid(id);
   }

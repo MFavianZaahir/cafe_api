@@ -30,8 +30,15 @@ export class KasirService {
     // Fetch transactions based on filters
     return this.prisma.transaksi.findMany({
       where: whereClause,
-      include: { details: true, meja: true, user: true },
-    });
+      include: {
+        details: {
+          include: { menu: true }, // Include menu details for all items
+        },
+        meja: true,
+        user: true,
+        outlet: true, // Include outlet details
+      },
+    });    
   }
 
 
@@ -41,12 +48,14 @@ export class KasirService {
       where: { id_transaksi: id },
       include: {
         details: {
-          include: { menu: true }, // Include menu relation
+          include: { menu: true }, // Include menu details for all items
         },
         meja: true,
         user: true,
+        outlet: true, // Include outlet details
       },
     });
+    
 
     if (!transaksi) {
       throw new NotFoundException('Transaction not found');
@@ -86,22 +95,23 @@ async create(data: CreateTransactionDto) {
 
   // Create transaction in database
   const transaction = await this.prisma.transaksi.create({
-      data: {
-          nama_pelanggan,
-          user: { connect: { id_user: user.id_user } },
-          meja: { connect: { id_meja: meja.id_meja } },
-          details: { create: preparedDetails },
-          status: 'BELUM_BAYAR',
-          
+    data: {
+      nama_pelanggan,
+      user: { connect: { id_user: user.id_user } },
+      meja: { connect: { id_meja: meja.id_meja } },
+      details: { create: preparedDetails },
+      status: 'BELUM_BAYAR',
+      outlet: { connect: { id_outlet: 'outlet-id-here' } }, // Add the outlet connection
+    },
+    include: {
+      details: {
+        include: {
+          menu: true,
+        },
       },
-      include: {         
-        details: {
-          include: {
-            menu: true
-          }
-        } 
-      },
+    },
   });
+  
 
   // Prepare Midtrans payload
   const grossAmount = transaction.details.reduce(
@@ -137,8 +147,10 @@ async create(data: CreateTransactionDto) {
 
 async markAsPaid(id: string) {
   const transaksi = await this.prisma.transaksi.findUnique({
-      where: { id_transaksi: id },
+    where: { id_transaksi: id },
+    include: { details: { include: { menu: true } } }, // Include details and menu
   });
+  
 
   if (!transaksi) throw new NotFoundException('Transaction not found');
 

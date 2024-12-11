@@ -38,13 +38,25 @@ CREATE TABLE `Menu` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `Outlet` (
+    `id_outlet` VARCHAR(191) NOT NULL,
+    `name` VARCHAR(191) NOT NULL,
+    `address` VARCHAR(191) NOT NULL,
+    `longitude` DOUBLE NOT NULL,
+    `latitude` DOUBLE NOT NULL,
+
+    PRIMARY KEY (`id_outlet`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `Transaksi` (
     `id_transaksi` VARCHAR(191) NOT NULL,
     `tgl_transaksi` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `id_user` VARCHAR(191) NOT NULL,
     `id_meja` VARCHAR(191) NOT NULL,
     `nama_pelanggan` VARCHAR(191) NOT NULL,
-    `status` ENUM('BELUM_BAYAR', 'LUNAS') NOT NULL DEFAULT 'BELUM_BAYAR',
+    `status` ENUM('LUNAS', 'BELUM_BAYAR', 'CANCELED', 'EXPIRED') NOT NULL DEFAULT 'BELUM_BAYAR',
+    `id_outlet` VARCHAR(191) NOT NULL,
 
     PRIMARY KEY (`id_transaksi`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -66,6 +78,9 @@ ALTER TABLE `Transaksi` ADD CONSTRAINT `Transaksi_id_user_fkey` FOREIGN KEY (`id
 
 -- AddForeignKey
 ALTER TABLE `Transaksi` ADD CONSTRAINT `Transaksi_id_meja_fkey` FOREIGN KEY (`id_meja`) REFERENCES `Meja`(`id_meja`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Transaksi` ADD CONSTRAINT `Transaksi_id_outlet_fkey` FOREIGN KEY (`id_outlet`) REFERENCES `Outlet`(`id_outlet`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Detail Transaksi` ADD CONSTRAINT `Detail Transaksi_id_transaksi_fkey` FOREIGN KEY (`id_transaksi`) REFERENCES `Transaksi`(`id_transaksi`) ON DELETE RESTRICT ON UPDATE CASCADE;
