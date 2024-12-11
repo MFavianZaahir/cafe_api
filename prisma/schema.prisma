@@ -78,9 +78,11 @@ enum Role{
   MANAJER
 }
 
-enum Status{
-  BELUM_BAYAR
+enum Status {
   LUNAS
+  BELUM_BAYAR
+  CANCELED
+  EXPIRED
 }
 
 enum Jenis{

@@ -25,4 +25,15 @@ export class MidtransService {
       throw new Error(`Midtrans transaction failed: ${error.message}`);
     }
   }
+
+  // midtrans.service.ts
+  async checkTransactionStatus(orderId: string) {
+    try {
+        const status = await this.snap.transaction.status(orderId);
+        return status;
+    } catch (error) {
+        throw new Error(`Failed to check transaction status: ${error.message}`);
+    }
+  }
+
 }
