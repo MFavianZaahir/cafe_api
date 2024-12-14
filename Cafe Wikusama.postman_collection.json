@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "2059b42c-db30-4753-adc7-7bc38c69e2ea",
+		"_postman_id": "e917397f-1028-4a6a-88a8-57d3e67c4265",
 		"name": "Cafe Wikusama",
 		"description": "# 🚀 Get started here\n\nThis template guides you through CRUD operations (GET, POST, PUT, DELETE), variables, and tests.\n\n## 🔖 **How to use this template**\n\n#### **Step 1: Send requests**\n\nRESTful APIs allow you to perform CRUD operations using the POST, GET, PUT, and DELETE HTTP methods.\n\nThis collection contains each of these [request](https://learning.postman.com/docs/sending-requests/requests/) types. Open each request and click \"Send\" to see what happens.\n\n#### **Step 2: View responses**\n\nObserve the response tab for status code (200 OK), response time, and size.\n\n#### **Step 3: Send new Body data**\n\nUpdate or add new data in \"Body\" in the POST request. Typically, Body data is also used in PUT request.\n\n```\n{\n    \"name\": \"Add your name in the body\"\n}\n\n ```\n\n#### **Step 4: Update the variable**\n\nVariables enable you to store and reuse values in Postman. We have created a [variable](https://learning.postman.com/docs/sending-requests/variables/) called `base_url` with the sample request [https://postman-api-learner.glitch.me](https://postman-api-learner.glitch.me). Replace it with your API endpoint to customize this collection.\n\n#### **Step 5: Add tests in the \"Scripts\" tab**\n\nAdding tests to your requests can help you confirm that your API is working as expected. You can write test scripts in JavaScript and view the output in the \"Test Results\" tab.\n\n<img src=\"https://content.pstmn.io/fa30ea0a-373d-4545-a668-e7b283cca343/aW1hZ2UucG5n\" alt=\"\" height=\"1530\" width=\"2162\">\n\n## 💪 Pro tips\n\n- Use folders to group related requests and organize the collection.\n    \n- Add more [scripts](https://learning.postman.com/docs/writing-scripts/intro-to-scripts/) to verify if the API works as expected and execute workflows.\n    \n\n## 💡Related templates\n\n[API testing basics](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9a37a28-055b-49cd-8c7e-97494a21eb54&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[API documentation](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9c28f47-1253-44af-a2f3-20dce4da1f18&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[Authorization methods](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=31a9a6ed-4cdf-4ced-984c-d12c9aec1c27&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
@@ -39,17 +39,9 @@
 						},
 						"method": "GET",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
 						"url": {
-							"raw": "localhost:3000/users",
+							"raw": "http://localhost:3000/users",
+							"protocol": "http",
 							"host": [
 								"localhost"
 							],
@@ -83,16 +75,33 @@
 						"method": "POST",
 						"header": [],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\":\"Adachi-san\",\n    \"username\": \"adachi\",\n    \"password\":\"admin\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "name",
+									"value": "Shimamura-dono",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "shimamurakontolbn",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "admin",
+									"type": "text"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"src": "/C:/Users/ACER/Pictures/96093685_p0_master1200.jpg"
 								}
-							}
+							]
 						},
 						"url": {
-							"raw": "localhost:3000/users",
+							"raw": "http://localhost:3000/users",
+							"protocol": "http",
 							"host": [
 								"localhost"
 							],
@@ -177,6 +186,16 @@
 						}
 					],
 					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkYWNoaSIsInN1YiI6Ijg3YmQ3MjEyLTJlZjUtNGMwZC1hODFkLTljOTlkODA3OWNjZiIsInJvbGUiOiJBRE1JTiIsImlhdCI6MTczMzc5OTM3OSwiZXhwIjoxNzMzODAyOTc5fQ.tPHjNWKyrUPeLNld9GTzmqQEkETGEBE4pekuR8pB9UI",
+									"type": "string"
+								}
+							]
+						},
 						"method": "DELETE",
 						"header": [],
 						"body": {
@@ -189,14 +208,14 @@
 							}
 						},
 						"url": {
-							"raw": "localhost:3000/ninjas/3",
+							"raw": "localhost:3000/users/c76072c3-3a7a-4ae0-9e63-935c2a64ce35",
 							"host": [
 								"localhost"
 							],
 							"port": "3000",
 							"path": [
-								"ninjas",
-								"3"
+								"users",
+								"c76072c3-3a7a-4ae0-9e63-935c2a64ce35"
 							]
 						},
 						"description": "This is a DELETE request, and it is used to delete data that was previously created via a POST request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful DELETE request typically returns a `200 OK`, `202 Accepted`, or `204 No Content` response code."
@@ -218,28 +237,28 @@
 							"formdata": [
 								{
 									"key": "nama_menu",
-									"value": "Ambatuner",
+									"value": "Sop Kaki Kambing",
 									"type": "text"
 								},
 								{
 									"key": "jenis",
-									"value": "MINUMAN",
+									"value": "MAKANAN",
 									"type": "text"
 								},
 								{
 									"key": "deskripsi",
-									"value": "Oli Motor",
+									"value": "The goat",
 									"type": "text"
 								},
 								{
 									"key": "harga",
-									"value": "12000",
+									"value": "30000",
 									"type": "text"
 								},
 								{
 									"key": "gambar",
 									"type": "file",
-									"src": "/D:/Pictures/1724489307458.jpg"
+									"src": "/C:/Users/ACER/Pictures/37-o.jpg"
 								}
 							]
 						},
@@ -491,7 +510,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"nomor_meja\": 7,\r\n  \"username\": \"shimamura\",\r\n  \"nama_pelanggan\": \"John Doe\",\r\n  \"details\": [\r\n    { \"nama_menu\": \"Sego Rawon Uwireng Cik\", \"qty\": 2 },\r\n    { \"nama_menu\": \"Cumi Hitam Pak Kris\", \"qty\": 1 }\r\n  ]\r\n}",
+							"raw": "{\r\n  \"id_outlet\": \"4c9bea33-a17e-42b9-8fa5-757ef467bc48\",\r\n  \"nomor_meja\": 2   ,\r\n  \"username\": \"shimamura\",\r\n  \"nama_pelanggan\": \"Mas Amba\",\r\n  \"details\": [\r\n    { \"nama_menu\": \"Sop Kaki Kambing\", \"qty\": 2 }\r\n  ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -499,11 +518,11 @@
 							}
 						},
 						"url": {
-							"raw": "localhost:3000/kasir/",
+							"raw": "localhost:3001/kasir/",
 							"host": [
 								"localhost"
 							],
-							"port": "3000",
+							"port": "3001",
 							"path": [
 								"kasir",
 								""
@@ -549,6 +568,46 @@
 								"transactions",
 								"3a3f0ac3-4ab6-474d-8675-055f17c3033b",
 								"receipt"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Outlet",
+			"item": [
+				{
+					"name": "Get",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "Add Outlet",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"lantitude\":-7.779608110817588,\r\n    \"longitude\":110.37801969586637\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:3001/outlets",
+							"host": [
+								"localhost"
+							],
+							"port": "3001",
+							"path": [
+								"outlets"
 							]
 						}
 					},
