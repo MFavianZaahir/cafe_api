@@ -5,7 +5,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LoginUserDto } from './dto/login-user.dto';
 import { Role } from '@prisma/client';
 
-@Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,

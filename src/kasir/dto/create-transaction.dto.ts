@@ -33,5 +33,7 @@ export class CreateTransactionDto {
   @Type(() => TransactionDetailDto)
   details: TransactionDetailDto[];
 
-  id_outlet: string; // Add this field
-}
+  @IsNotEmpty()
+  @IsString()
+  id_outlet: string;
+  }

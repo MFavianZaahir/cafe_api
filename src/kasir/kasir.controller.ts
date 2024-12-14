@@ -30,15 +30,15 @@ export class KasirController {
   }
   
   @Get('transactions/:id')
-  @UseGuards(RolesGuard) // Apply the guard to the entire controller
-  @Roles('ADMIN')
+  // @UseGuards(RolesGuard) // Apply the guard to the entire controller
+  // @Roles('ADMIN')
   async findOne(@Param('id') id: string) {
     return this.kasirService.findOne(id);
   }
 
   @Post()
-  @UseGuards(RolesGuard) // Apply the guard to the entire controller
-  @Roles('KASIR')
+  // @UseGuards(RolesGuard) // Apply the guard to the entire controller
+  // @Roles('KASIR')
   async create(@Body() createTransactionDto: CreateTransactionDto) {
     if (!createTransactionDto.details || createTransactionDto.details.length === 0) {
       throw new BadRequestException('Transaction must include at least one menu item.');
@@ -48,15 +48,15 @@ export class KasirController {
   }
 
   @Put('transactions/:id/pay')
-  @UseGuards(RolesGuard) // Apply the guard to the entire controller
-  @Roles('KASIR')
+  // @UseGuards(RolesGuard) // Apply the guard to the entire controller
+  // @Roles('KASIR')
   async markAsPaid(@Param('id') id: string) {
     return this.kasirService.markAsPaid(id);
   }
 
   @Get('transactions/:id/receipt')
-  @UseGuards(RolesGuard) // Apply the guard to the entire controller
-  @Roles('KASIR')
+  // @UseGuards(RolesGuard) // Apply the guard to the entire controller
+  // @Roles('KASIR')
   async printReceipt(@Param('id') id: string) {
     return this.kasirService.printReceipt(id);
   }

@@ -3,29 +3,32 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { MidtransService } from 'src/midtrans/midtrans.service';
-import { Prisma, Status } from '@prisma/client';
+import { Status } from '@prisma/client';
 
 @Injectable()
 export class KasirService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly midtransService: MidtransService
-  ) { }
+  ) {}
 
   // View all transactions
   async findAll(filters: { status?: string; startDate?: Date; endDate?: Date }) {
     const { status, startDate, endDate } = filters;
 
     // Construct the where clause dynamically based on the provided filters
-    const whereClause: any = {
-      status,
-      tgl_transaksi: startDate || endDate
-        ? {
-          gte: startDate || undefined, // Greater than or equal to startDate
-          lte: endDate || undefined,  // Less than or equal to endDate
-        }
-        : undefined,
-    };
+    const whereClause: any = {};
+
+    if (status && status !== '') {
+      whereClause.status = status as Status; // Ensure the status matches the Prisma Status enum
+    }
+
+    if (startDate || endDate) {
+      whereClause.tgl_transaksi = {
+        ...(startDate && { gte: startDate }), // Add gte condition if startDate is provided
+        ...(endDate && { lte: endDate }),    // Add lte condition if endDate is provided
+      };
+    }
 
     // Fetch transactions based on filters
     return this.prisma.transaksi.findMany({
@@ -38,9 +41,8 @@ export class KasirService {
         user: true,
         outlet: true, // Include outlet details
       },
-    });    
+    });
   }
-
 
   // Get specific transaction
   async findOne(id: string) {
@@ -68,7 +70,15 @@ export class KasirService {
 // kasir.service.ts
 
 async create(data: CreateTransactionDto) {
-  const { nomor_meja, username, nama_pelanggan, details } = data;
+  const { nomor_meja, username, nama_pelanggan, details, id_outlet } = data;
+
+  // Validate outlet
+  const outlet = await this.prisma.outlet.findUnique({
+    where: { id_outlet },
+  });
+  if (!outlet) {
+    throw new NotFoundException(`Outlet with ID "${id_outlet}" not found.`);
+  }
 
   // Validate table
   const meja = await this.prisma.meja.findUnique({ where: { nomor_meja } });
@@ -81,16 +91,16 @@ async create(data: CreateTransactionDto) {
 
   // Prepare transaction details
   const preparedDetails = await Promise.all(
-      details.map(async (detail) => {
-          const menu = await this.prisma.menu.findUnique({ where: { nama_menu: detail.nama_menu } });
-          if (!menu) throw new NotFoundException(`Menu item "${detail.nama_menu}" not found.`);
-          return {
-              id_menu: menu.id_menu,
-              harga: menu.harga,
-              qty: detail.qty,
-              totalHarga: BigInt(menu.harga * detail.qty),
-          };
-      }),
+    details.map(async (detail) => {
+      const menu = await this.prisma.menu.findUnique({ where: { nama_menu: detail.nama_menu } });
+      if (!menu) throw new NotFoundException(`Menu item "${detail.nama_menu}" not found.`);
+      return {
+        id_menu: menu.id_menu,
+        harga: menu.harga,
+        qty: detail.qty,
+        totalHarga: BigInt(menu.harga * detail.qty),
+      };
+    }),
   );
 
   // Create transaction in database
@@ -101,49 +111,46 @@ async create(data: CreateTransactionDto) {
       meja: { connect: { id_meja: meja.id_meja } },
       details: { create: preparedDetails },
       status: 'BELUM_BAYAR',
-      outlet: { connect: { id_outlet: 'outlet-id-here' } }, // Add the outlet connection
+      outlet: { connect: { id_outlet } }, // Connect to the validated outlet
     },
     include: {
       details: {
-        include: {
-          menu: true,
-        },
+        include: { menu: true },
       },
     },
   });
-  
 
   // Prepare Midtrans payload
   const grossAmount = transaction.details.reduce(
-      (total, detail) => total + Number(detail.harga) * detail.qty,
-      0
+    (total, detail) => total + Number(detail.harga) * detail.qty,
+    0,
   );
 
   const transactionDetails = {
-      transaction_details: {
-          order_id: transaction.id_transaksi,
-          gross_amount: grossAmount,
-      },
-      customer_details: {
-          first_name: nama_pelanggan,
-          // email: user.email,
-      },
-      item_details: transaction.details.map((detail) => ({
-          id: detail.id_menu,
-          price: Number(detail.harga),
-          quantity: detail.qty,
-          name: detail.menu.nama_menu,
-      })),
+    transaction_details: {
+      order_id: transaction.id_transaksi,
+      gross_amount: grossAmount,
+    },
+    customer_details: {
+      first_name: nama_pelanggan,
+    },
+    item_details: transaction.details.map((detail) => ({
+      id: detail.id_menu,
+      price: Number(detail.harga),
+      quantity: detail.qty,
+      name: detail.menu.nama_menu,
+    })),
   };
 
   // Create Midtrans transaction
   const midtransTransaction = await this.midtransService.createTransaction(transactionDetails);
 
   return {
-      message: 'Transaction created successfully. Proceed to payment.',
-      paymentUrl: midtransTransaction.redirect_url,
+    message: 'Transaction created successfully. Proceed to payment.',
+    paymentUrl: midtransTransaction.redirect_url,
   };
 }
+
 
 async markAsPaid(id: string) {
   const transaksi = await this.prisma.transaksi.findUnique({
